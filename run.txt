@@ -1,0 +1,1 @@
+ansible-playbook ./playbook/index.yml -i hosts.ini
