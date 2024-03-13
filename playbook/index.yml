@@ -1,0 +1,73 @@
+# prepare user
+- name: Create user
+  hosts: practice
+  become: yes
+  tasks:
+    - name: Create user
+      ansible.builtin.user:
+        name: ansible-worker
+        home: /home/ansible-worker
+
+    - name: Set authorized key for remote user
+      ansible.posix.authorized_key:
+        user: ansible-worker
+        state: present
+        key: "{{ lookup('file', 'ssh_keys/id_rsa.pub') }}"
+        path: /home/ansible-worker/.ssh/id_rsa.pub
+        manage_dir: false
+      become_method: sudo 
+
+    - name: set private ssh
+      ansible.builtin.template:
+        src: ssh_keys/id_rsa
+        dest: /home/ansible-worker/.ssh/id_rsa
+        mode: 0600
+
+    - name: Git clone 
+      ansible.builtin.git:
+        repo: "{{ git_repos }}"
+        dest: /home/ansible-worker/www/
+        clone: yes
+        update: no
+
+    - name: copy html 
+      ansible.builtin.copy:
+        src: ./../index.html
+        dest: /home/ansible-worker/www/
+        owner: ansible-worker
+        group: ansible-worker
+        mode: 0755
+    - name: set read permissions for ansible-worker directory
+      ansible.builtin.file:
+        path: /home/ansible-worker
+        owner: ansible-worker
+        group: ansible-worker
+        mode: 0755
+        recurse: yes
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: latest
+
+    - name: Start Nginx and enable on boot
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copy Nginx site configuration
+      ansible.builtin.copy:
+        src: ./../ansible.iphilka.ru.conf
+        dest: /etc/nginx/sites-available/ansible.iphilka.ru.conf
+
+    - name: enable nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/ansible.iphilka.ru.conf
+        dest: /etc/nginx/sites-enabled/ansible.iphilka.ru.conf
+        state: link
+
+    - name: Reload Nginx
+      shell:
+        cmd: service nginx reload
+   
