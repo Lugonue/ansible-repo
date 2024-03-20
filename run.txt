@@ -1,5 +1,1 @@
 ansible-playbook playbook/index.yml --extra-vars "git_repos=git@github.com:iphilka/stud-template" -i hosts.ini 
-
-
-** test ** 
-ansible-playbook  playbook/index.yml --extra-vars "git_repos=git@github.com:Lugonue/ANSIBLE-practice.git" -i hosts.ini
